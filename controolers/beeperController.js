@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { BeeperStatus } from "../models/types.js";
 import { writeBeeperToJsonFile, writeBeepersToJsonFile, readBeeperFromJsonFile } from "../DAL/jsonBeeper.js";
 import { v4 as uuid4 } from 'uuid';
-import { findBeeperById, updateBeeperStatus } from "../services/beeperService.js";
+import { findBeeperById, updateBeeperStatus, validateBeeper } from "../services/beeperService.js";
 /// beeper CRUD
 // create beeper
 export const createBeeper = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -75,31 +75,36 @@ export const deleteBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, 
         res.status(500).send(err);
     }
 });
-// update beeper status
+// get beepers by status
+export const getBeepersByStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const beepers = yield readBeeperFromJsonFile();
+        const beepersByStatus = beepers.filter((b) => b.status === req.params.status);
+        res.status(200).json(beepersByStatus);
+    }
+    catch (err) {
+        res.status(500).send(err);
+    }
+});
+// put status beeper by id
 export const putStatusBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield readBeeperFromJsonFile();
         const beeper = yield findBeeperById(req.params.id);
-        if (!beeper) {
-            res.status(404).json({ message: 'Beeper not found' });
-            return;
-        }
-        const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
-        if (beepers[indexBeeper].status === BeeperStatus.Detonated) {
-            res.status(409).json({ message: "Beeper cannot be updated as it is already in the final status" });
+        // Validate beeper
+        const validationResponse = validateBeeper(beeper, beepers);
+        if (validationResponse) {
+            res.status(validationResponse.status).json({ message: validationResponse.message });
             return;
         }
         const { latitude, longitude } = req.body;
-        const newStatus = updateBeeperStatus(beepers[indexBeeper], latitude, longitude);
+        // Update status
+        const newStatus = updateBeeperStatus(beepers[beepers.findIndex((b) => b.id === beeper.id)], latitude, longitude);
         if (!newStatus) {
-            if (!latitude || !longitude) {
-                res.status(400).json({ message: 'Latitude and longitude are required' });
-                return;
-            }
             res.status(400).json({ message: 'Invalid status' });
             return;
         }
-        beepers[indexBeeper].status = newStatus;
+        beepers[beepers.findIndex((b) => b.id === beeper.id)].status = newStatus;
         yield writeBeepersToJsonFile(beepers);
         res.status(200).json({ message: `Beeper status updated to ${newStatus} status` });
     }

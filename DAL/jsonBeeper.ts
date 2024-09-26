@@ -2,6 +2,7 @@ import jsonfile from 'jsonfile';
 import { Beeper, BeeperStatus } from '../models/types.js';       
 
 
+// A function that writes the beeper to the JSON file
 export const writeBeeperToJsonFile = async (beeper: Beeper) => {
     try {
         const beepers: Beeper[] = await jsonfile.readFile('./data/db.json');
@@ -21,7 +22,7 @@ export const writeBeeperToJsonFile = async (beeper: Beeper) => {
 };
 
 
-
+// A function that writes the beepers to the JSON file
 export const writeBeepersToJsonFile = async (newBeepers: Beeper[]) => {
     try {
         await jsonfile.writeFile('./data/db.json', newBeepers);
@@ -33,6 +34,7 @@ export const writeBeepersToJsonFile = async (newBeepers: Beeper[]) => {
 
 
 
+// A function that reads the beeper from the JSON file
 export const readBeeperFromJsonFile = async () => {
     
     const beepers = await jsonfile.readFile('./data/db.json')

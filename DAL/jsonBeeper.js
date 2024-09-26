@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import jsonfile from 'jsonfile';
+// A function that writes the beeper to the JSON file
 export const writeBeeperToJsonFile = (beeper) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield jsonfile.readFile('./data/db.json');
@@ -25,6 +26,7 @@ export const writeBeeperToJsonFile = (beeper) => __awaiter(void 0, void 0, void 
         console.error(err);
     }
 });
+// A function that writes the beepers to the JSON file
 export const writeBeepersToJsonFile = (newBeepers) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield jsonfile.writeFile('./data/db.json', newBeepers);
@@ -34,6 +36,7 @@ export const writeBeepersToJsonFile = (newBeepers) => __awaiter(void 0, void 0, 
         console.error(err);
     }
 });
+// A function that reads the beeper from the JSON file
 export const readBeeperFromJsonFile = () => __awaiter(void 0, void 0, void 0, function* () {
     const beepers = yield jsonfile.readFile('./data/db.json');
     return beepers;

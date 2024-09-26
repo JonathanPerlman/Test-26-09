@@ -2,11 +2,26 @@ import { Beeper, BeeperStatus } from "../models/types.js";
 import { writeBeeperToJsonFile, writeBeepersToJsonFile, readBeeperFromJsonFile } from "../DAL/jsonBeeper.js";
 import { Latitude, Longitude } from "../handlers/beeperHandler.js";
 
+// find beeper by id
 export const findBeeperById = async (beeperId: string): Promise<Beeper | undefined> => {
     const beepers: Beeper[] = await readBeeperFromJsonFile();
     return beepers.find((u) => u.id === beeperId);
 };
 
+// A function that validate beeper
+export const validateBeeper = (beeper: Beeper | undefined, beepers: Beeper[]): { status: number; message: string } | null => {
+    if (!beeper) {
+        return { status: 404, message: 'Beeper not found' };
+    }
+
+    const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
+    if (beepers[indexBeeper].status === BeeperStatus.Detonated) {
+        return { status: 409, message: "Beeper cannot be updated as it is already in the final status" };
+    }
+    return null; 
+};
+
+// A function that Update beeper status
 export const updateBeeperStatus = (beeper: Beeper, latitude?: number, longitude?: number): BeeperStatus | null => {
     switch (beeper.status) {
         case BeeperStatus.Manufactured:
@@ -19,6 +34,7 @@ export const updateBeeperStatus = (beeper: Beeper, latitude?: number, longitude?
             return null;
     }
 };
+// A function that handle shipped status
 const handleShippedStatus = (beeper: Beeper, latitude?: number, longitude?: number): BeeperStatus | null => {
     if (latitude && longitude) {
         const indexLatitude = Latitude.findIndex((l) => l === latitude);
