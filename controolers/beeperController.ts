@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import { Beeper, BeeperStatus } from "../models/types.js";
 import { writeBeeperToJsonFile, writeBeepersToJsonFile, readBeeperFromJsonFile } from "../DAL/jsonBeeper.js";
 import { v4 as uuid4 } from 'uuid';
+import {findBeeperById,updateBeeperStatus } from "../services/beeperService.js";
 import { promises } from "dns";
 
-const findBeeperById = async (beeperId: string): Promise<Beeper | undefined> => {
-    const beepers: Beeper[] = await readBeeperFromJsonFile();
-    return beepers.find((u) => u.id === beeperId);
-};
+/// beeper CRUD
 
+// create beeper
 export const createBeeper = async (req: Request, res: Response): Promise<void> => {
     try {
         const beeper: Beeper = req.body;
@@ -25,7 +24,7 @@ export const createBeeper = async (req: Request, res: Response): Promise<void> =
 }
 
 
-
+// get all beepers
 export const getAllBeepers = async (req: Request, res: Response): Promise<void> => {
     try {
         const beepers: Beeper[] = await readBeeperFromJsonFile();
@@ -36,7 +35,7 @@ export const getAllBeepers = async (req: Request, res: Response): Promise<void> 
 };
 
 
-
+// get beeper by id
 export const getBeeperById = async (req: Request, res: Response): Promise<void> => {
     try {
         const beeperFind = await findBeeperById(req.params.id);
@@ -52,6 +51,7 @@ export const getBeeperById = async (req: Request, res: Response): Promise<void> 
 };
 
 
+// delete beeper by id
 export const deleteBeeperById = async (req: Request, res: Response): Promise<void> => {
     try {
         const beepers: Beeper[] = await readBeeperFromJsonFile();
@@ -74,7 +74,7 @@ export const deleteBeeperById = async (req: Request, res: Response): Promise<voi
 };
 
 
-
+// update beeper status
 export const putStatusBeeperById = async (req: Request, res: Response): Promise<void> => {
     try {
         const beepers: Beeper[] = await readBeeperFromJsonFile();
@@ -86,33 +86,24 @@ export const putStatusBeeperById = async (req: Request, res: Response): Promise<
         }
 
         const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
-
         if (beepers[indexBeeper].status === BeeperStatus.Detonated) {
             res.status(409).json({ message: "Beeper cannot be updated as it is already in the final status" });
             return;
         }
-
-        switch (beepers[indexBeeper].status) {
-            case BeeperStatus.Manufactured:
-                beepers[indexBeeper].status = BeeperStatus.Assembled;
-                break;
-            case BeeperStatus.Assembled:
-                beepers[indexBeeper].status = BeeperStatus.Shipped;
-                break;
-            case BeeperStatus.Shipped:
-                
-                beepers[indexBeeper].status = BeeperStatus.Deployed;
-                break;
-            case BeeperStatus.Deployed:
-                beepers[indexBeeper].status = BeeperStatus.Detonated;
-                break;
-            default:
-                res.status(400).json({ message: 'Invalid status' });
+        const {latitude, longitude} = req.body;
+        const newStatus = updateBeeperStatus(beepers[indexBeeper], latitude, longitude);
+        if (!newStatus) {
+            if(!latitude || !longitude) {
+                res.status(400).json({ message: 'Latitude and longitude are required' });
                 return;
+            }
+            res.status(400).json({ message: 'Invalid status' });
+            return;
         }
+        beepers[indexBeeper].status = newStatus;
         await writeBeepersToJsonFile(beepers);
-        res.status(200).json({massage: `Beeper status updated to ${beepers[indexBeeper].status}`});
-       } catch (error) {
-           res.status(500).json({ error: 'An error occurred while updating the beeper' });
-       }
+        res.status(200).json({ message: `Beeper status updated to ${newStatus} status`});
+    } catch (error) {
+        res.status(500).json({ error: 'An error occurred while updating the beeper' });
+    }
 };

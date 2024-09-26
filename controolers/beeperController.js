@@ -10,10 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { BeeperStatus } from "../models/types.js";
 import { writeBeeperToJsonFile, writeBeepersToJsonFile, readBeeperFromJsonFile } from "../DAL/jsonBeeper.js";
 import { v4 as uuid4 } from 'uuid';
-const findBeeperById = (beeperId) => __awaiter(void 0, void 0, void 0, function* () {
-    const beepers = yield readBeeperFromJsonFile();
-    return beepers.find((u) => u.id === beeperId);
-});
+import { findBeeperById, updateBeeperStatus } from "../services/beeperService.js";
+/// beeper CRUD
+// create beeper
 export const createBeeper = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beeper = req.body;
@@ -28,6 +27,7 @@ export const createBeeper = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
     ;
 });
+// get all beepers
 export const getAllBeepers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield readBeeperFromJsonFile();
@@ -37,6 +37,7 @@ export const getAllBeepers = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(500).send(err);
     }
 });
+// get beeper by id
 export const getBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beeperFind = yield findBeeperById(req.params.id);
@@ -51,6 +52,7 @@ export const getBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(500).send(err);
     }
 });
+// delete beeper by id
 export const deleteBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield readBeeperFromJsonFile();
@@ -73,6 +75,7 @@ export const deleteBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, 
         res.status(500).send(err);
     }
 });
+// update beeper status
 export const putStatusBeeperById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield readBeeperFromJsonFile();
@@ -86,58 +89,21 @@ export const putStatusBeeperById = (req, res) => __awaiter(void 0, void 0, void 
             res.status(409).json({ message: "Beeper cannot be updated as it is already in the final status" });
             return;
         }
-        switch (beepers[indexBeeper].status) {
-            case BeeperStatus.Manufactured:
-                beepers[indexBeeper].status = BeeperStatus.Assembled;
-                break;
-            case BeeperStatus.Assembled:
-                beepers[indexBeeper].status = BeeperStatus.Shipped;
-                break;
-            case BeeperStatus.Shipped:
-                beepers[indexBeeper].status = BeeperStatus.Deployed;
-                break;
-            case BeeperStatus.Deployed:
-                beepers[indexBeeper].status = BeeperStatus.Detonated;
-                break;
-            default:
-                res.status(400).json({ message: 'Invalid status' });
+        const { latitude, longitude } = req.body;
+        const newStatus = updateBeeperStatus(beepers[indexBeeper], latitude, longitude);
+        if (!newStatus) {
+            if (!latitude || !longitude) {
+                res.status(400).json({ message: 'Latitude and longitude are required' });
                 return;
+            }
+            res.status(400).json({ message: 'Invalid status' });
+            return;
         }
+        beepers[indexBeeper].status = newStatus;
         yield writeBeepersToJsonFile(beepers);
-        res.status(200).json({ massage: `Beeper status updated to ${beepers[indexBeeper].status}` });
+        res.status(200).json({ message: `Beeper status updated to ${newStatus} status` });
     }
     catch (error) {
         res.status(500).json({ error: 'An error occurred while updating the beeper' });
     }
 });
-// export const putStatusBeeperById = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         const beepers: Beeper[] = await readBeeperFromJsonFile();
-//         const beeper = await findBeeperById(req.params.id);
-//         if (!beeper) {
-//             res.status(404).json({ massage: 'Beeper not found' });
-//             return;
-//         }
-//         const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
-//         const currentStatusIndex = listStatus.indexOf(beepers[indexBeeper].status);
-//         if (beepers[indexBeeper].status == listStatus[4]) {
-//             res.status(409).json({ message: "Beeper cannot be updated as it is already in the status" });
-//             return;
-//         }
-//         if (beepers[indexBeeper].status == listStatus[3]) {
-//             beepers[indexBeeper].status = listStatus[currentStatusIndex + 1];
-//             await writeBeepersToJsonFile(beepers);
-//             res.status(200).send(`Beeper status updated to ${listStatus[currentStatusIndex + 1]}`);
-//             return;
-//         }
-//         if (beepers[indexBeeper].status >= listStatus[0] && beepers[indexBeeper].status <= listStatus[2]) {
-//             beepers[indexBeeper].status = listStatus[currentStatusIndex + 1];
-//         }
-//         await writeBeepersToJsonFile(beepers);
-//         res.status(200).send(`Beeper status updated to ${listStatus[currentStatusIndex + 1]}`);
-//         return;
-//         }
-//      catch (error) {
-//     res.status(500).json({ error: 'An error occurred while updating the beeper' });
-// }
-// };

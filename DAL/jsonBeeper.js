@@ -11,7 +11,13 @@ import jsonfile from 'jsonfile';
 export const writeBeeperToJsonFile = (beeper) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const beepers = yield jsonfile.readFile('./data/db.json');
-        beepers.push(beeper);
+        const existingBeeperIndex = beepers.findIndex((b) => b.id === beeper.id);
+        if (existingBeeperIndex !== -1) {
+            beepers[existingBeeperIndex] = beeper;
+        }
+        else {
+            beepers.push(beeper);
+        }
         yield jsonfile.writeFile('./data/db.json', beepers);
         console.log("File written successfully.");
     }
