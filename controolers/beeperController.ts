@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { Beeper, BeeperStatus } from "../models/types.js";
 import { writeBeeperToJsonFile, writeBeepersToJsonFile, readBeeperFromJsonFile } from "../DAL/jsonBeeper.js";
 import { v4 as uuid4 } from 'uuid';
-import {findBeeperById,updateBeeperStatus, validateBeeper } from "../services/beeperService.js";
+import {findBeeperById,updateBeeperStatus } from "../services/beeperService.js";
 import { promises } from "dns";
 
 /// beeper CRUD
@@ -94,19 +94,18 @@ export const putStatusBeeperById = async (req: Request, res: Response): Promise<
         const beeper = await findBeeperById(req.params.id);
 
         // Validate beeper
-        const validationResponse = validateBeeper(beeper, beepers);
-        if (validationResponse) {
-            res.status(validationResponse.status).json({ message: validationResponse.message });
+        if (!beeper) {
+            res.status(400).json({ message: "Invalid beeper" });
             return;
         }
         const { latitude, longitude } = req.body;
         // Update status
-        const newStatus = updateBeeperStatus(beepers[beepers.findIndex((b) => b.id === beeper!.id)], latitude, longitude);
+        const newStatus = updateBeeperStatus(beeper!, latitude, longitude);
         if (!newStatus) {
             res.status(400).json({ message: 'Invalid status' });
             return;
         }
-        beepers[beepers.findIndex((b) => b.id === beeper!.id)].status = newStatus;
+        beeper!.status = newStatus;
         await writeBeepersToJsonFile(beepers);
         res.status(200).json({ message: `Beeper status updated to ${newStatus} status` });
     } catch (error) {

@@ -8,19 +8,6 @@ export const findBeeperById = async (beeperId: string): Promise<Beeper | undefin
     return beepers.find((u) => u.id === beeperId);
 };
 
-// A function that validate beeper
-export const validateBeeper = (beeper: Beeper | undefined, beepers: Beeper[]): { status: number; message: string } | null => {
-    if (!beeper) {
-        return { status: 404, message: 'Beeper not found' };
-    }
-
-    const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
-    if (beepers[indexBeeper].status === BeeperStatus.Detonated) {
-        return { status: 409, message: "Beeper cannot be updated as it is already in the final status" };
-    }
-    return null; 
-};
-
 // A function that Update beeper status
 export const updateBeeperStatus = (beeper: Beeper, latitude?: number, longitude?: number): BeeperStatus | null => {
     switch (beeper.status) {

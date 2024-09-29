@@ -15,17 +15,6 @@ export const findBeeperById = (beeperId) => __awaiter(void 0, void 0, void 0, fu
     const beepers = yield readBeeperFromJsonFile();
     return beepers.find((u) => u.id === beeperId);
 });
-// A function that validate beeper
-export const validateBeeper = (beeper, beepers) => {
-    if (!beeper) {
-        return { status: 404, message: 'Beeper not found' };
-    }
-    const indexBeeper = beepers.findIndex((b) => b.id === beeper.id);
-    if (beepers[indexBeeper].status === BeeperStatus.Detonated) {
-        return { status: 409, message: "Beeper cannot be updated as it is already in the final status" };
-    }
-    return null;
-};
 // A function that Update beeper status
 export const updateBeeperStatus = (beeper, latitude, longitude) => {
     switch (beeper.status) {
