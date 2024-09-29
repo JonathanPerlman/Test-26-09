@@ -8,6 +8,7 @@ export const findBeeperById = async (beeperId: string): Promise<Beeper | undefin
     return beepers.find((u) => u.id === beeperId);
 };
 
+
 // A function that Update beeper status
 export const updateBeeperStatus = (beeper: Beeper, latitude?: number, longitude?: number): BeeperStatus | null => {
     switch (beeper.status) {

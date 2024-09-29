@@ -91,9 +91,8 @@ export const putStatusBeeperById = (req, res) => __awaiter(void 0, void 0, void 
     try {
         const beepers = yield readBeeperFromJsonFile();
         const beeper = yield findBeeperById(req.params.id);
-        // Validate beeper
         if (!beeper) {
-            res.status(400).json({ message: "Invalid beeper" });
+            res.status(404).json({ message: 'Beeper not found' });
             return;
         }
         const { latitude, longitude } = req.body;
@@ -104,7 +103,7 @@ export const putStatusBeeperById = (req, res) => __awaiter(void 0, void 0, void 
             return;
         }
         beeper.status = newStatus;
-        yield writeBeepersToJsonFile(beepers);
+        yield writeBeeperToJsonFile(beeper);
         res.status(200).json({ message: `Beeper status updated to ${newStatus} status` });
     }
     catch (error) {
